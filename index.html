@@ -2,24 +2,71 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Лучший чат с самим собой</title>
+    <title>Чат</title>
     <style>
-        #messages { height: 300px; overflow-y: scroll; border: 1px solid #ccc; }
-        #input { width: 100%; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            flex: 1; 
+            overflow: auto;
+            padding: 10px;
+        }
+        #input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        #online-users {
+            border: 1px solid #ccc;
+            height: 100px; 
+            overflow: auto;
+            padding: 10px;
+        }
+        #name {
+            height: 25px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
-    <div id="messages"></div>
-    <input id="input" type="text" placeholder="Введите сообщение..." />
+    <div class="container">
+        <div id="messages"></div>
+        <input id="input" type="text" placeholder="Введите сообщение...">
+        <div id="name">Подключенные пользователи</div>
+        <div id="online-users"></div>
+    </div>
     <script>
         const ws = new WebSocket("ws://localhost:8888/websocket");
         const messagesDiv = document.getElementById("messages");
         const input = document.getElementById("input");
+        const onlineUsersDiv = document.getElementById("online-users");
 
         ws.onmessage = function(event) {
-            const message = document.createElement("div");
-            message.textContent = event.data;
-            messagesDiv.appendChild(message);
+            if (event.data.startsWith("Онлайн клиенты:")) {
+                onlineUsersDiv.innerHTML = "";
+                const onlineUsers = event.data.replace("Онлайн клиенты: ", "").split(", ");
+                onlineUsers.forEach(user => {
+                    const userDiv = document.createElement("div");
+                    userDiv.textContent = user;
+                    onlineUsersDiv.appendChild(userDiv);
+                });
+            } else {
+                const message = document.createElement("div");
+                message.textContent = event.data;
+                messagesDiv.appendChild(message);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+            }
         };
 
         input.addEventListener("keypress", function(event) {

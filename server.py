@@ -2,18 +2,18 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 import redis
-
-
+import uuid
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-
-clients = []
+clients = {}
 
 class ChatWebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
-        clients.append(self)
-        self.write_message("Вы вошли в чат!")
+        client_id = str(uuid.uuid4())  
+        clients[self] = client_id 
+        self.write_message(f"Вы вошли в чат с ID: {client_id}")
+        self.send_online_clients()
 
         pubsub = redis_client.pubsub()
         pubsub.subscribe('chat_channel')
@@ -24,16 +24,22 @@ class ChatWebSocket(tornado.websocket.WebSocketHandler):
         while True:
             message = pubsub.get_message()
             if message and message['type'] == 'message':
-                for client in clients:
+                for client in clients.keys():
                     client.write_message(message['data'].decode('utf-8'))
             await tornado.gen.sleep(0.1)
 
     def on_message(self, message):
-      
         redis_client.publish('chat_channel', message)
 
     def on_close(self):
-        clients.remove(self)
+        del clients[self]  
+        self.send_online_clients()
+
+    def send_online_clients(self):
+        online_clients = [f"id: {client_id}" for client_id in clients.values()]
+        online_clients_message = f"Онлайн клиенты: {', '.join(online_clients)}"
+        for client in clients.keys():
+            client.write_message(online_clients_message)
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):

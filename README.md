@@ -2,7 +2,7 @@
 
 для работы требуется установить:
 
-pip install tornado redis
+pip install tornado redis uuid
 
 # Запуск
 
