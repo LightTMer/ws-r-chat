@@ -7,5 +7,5 @@ pip install tornado redis
 # Запуск
 
 1) запустить сервер redis.
-2) перейти на запущенный сервер http://localhost:8888
-3) запустить файл: python server.py
+2) запустить файл: python server.py
+3) перейти на запущенный сервер http://localhost:8888
