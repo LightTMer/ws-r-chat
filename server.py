@@ -4,23 +4,25 @@ import tornado.websocket
 import redis
 import uuid
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 clients = {}
+pubsub = redis_client.pubsub()
 
 class ChatWebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
-        client_id = str(uuid.uuid4())  
-        clients[self] = client_id 
+        client_id = str(uuid.uuid4())
+        clients[self] = client_id
         self.write_message(f"Вы вошли в чат с ID: {client_id}")
         self.send_online_clients()
 
-        pubsub = redis_client.pubsub()
-        pubsub.subscribe('chat_channel')
+      
+        if not hasattr(self, 'is_subscribed'):
+            pubsub.subscribe('chat_channel')
+            tornado.ioloop.IOLoop.current().add_callback(self.listen_to_redis)
 
-        tornado.ioloop.IOLoop.current().add_callback(self.listen_to_redis, pubsub)
-
-    async def listen_to_redis(self, pubsub):
+    async def listen_to_redis(self):
         while True:
             message = pubsub.get_message()
             if message and message['type'] == 'message':
@@ -29,10 +31,10 @@ class ChatWebSocket(tornado.websocket.WebSocketHandler):
             await tornado.gen.sleep(0.1)
 
     def on_message(self, message):
-        redis_client.publish('chat_channel', message)
+        redis_client.publish('chat_channel', f"{clients[self]}: {message}")
 
     def on_close(self):
-        del clients[self]  
+        del clients[self]
         self.send_online_clients()
 
     def send_online_clients(self):

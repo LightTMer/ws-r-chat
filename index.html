@@ -53,21 +53,21 @@
         const onlineUsersDiv = document.getElementById("online-users");
 
         ws.onmessage = function(event) {
-            if (event.data.startsWith("Онлайн клиенты:")) {
-                onlineUsersDiv.innerHTML = "";
-                const onlineUsers = event.data.replace("Онлайн клиенты: ", "").split(", ");
-                onlineUsers.forEach(user => {
-                    const userDiv = document.createElement("div");
-                    userDiv.textContent = user;
-                    onlineUsersDiv.appendChild(userDiv);
-                });
-            } else {
-                const message = document.createElement("div");
-                message.textContent = event.data;
-                messagesDiv.appendChild(message);
-                messagesDiv.scrollTop = messagesDiv.scrollHeight; 
-            }
-        };
+        if (event.data.startsWith("Онлайн клиенты:")) {
+            onlineUsersDiv.innerHTML = "";
+            const onlineUsers = event.data.replace("Онлайн клиенты: ", "").split(", ");
+            onlineUsers.forEach(user => {
+                const userDiv = document.createElement("div");
+                userDiv.textContent = user;
+                onlineUsersDiv.appendChild(userDiv);
+            });
+        } else {
+            const message = document.createElement("div");
+            message.textContent = event.data; //  ID отправителя добавляю
+            messagesDiv.appendChild(message);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+        }
+        };  
 
         input.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
